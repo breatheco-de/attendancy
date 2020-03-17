@@ -1,16 +1,42 @@
 import PropTypes from "prop-types";
 
+const ASSETS_URL = process.env.ASSETS_URL + "/apis";
+const API_URL = process.env.API_URL;
+
 const getState = ({ getStore, setStore, getActions }) => {
 	return {
 		store: {
 			cohorts: [],
-			students: [],
+			current: null,
+			students: null,
 			dailyAvg: {},
+			access_token: null,
+			assets_token: null,
 			totalAvg: null
 		},
 		actions: {
-			getStudentsAndActivities: ({ cohortSlug, access_token, props }) => {
-				let url = `https://api.breatheco.de/students/cohort/${cohortSlug}?access_token=${access_token}`;
+			getTokensFromURL: props => {
+				const params = new URLSearchParams(location.search);
+
+				setStore({
+					assets_token: params.get("assets_token"),
+					access_token: params.get("access_token")
+				});
+
+				const initialCohort = params.get("cohort_slug");
+				const { cohorts } = getStore();
+				if (initialCohort) {
+					getActions("getStudentsAndActivities")({
+						cohort: cohorts.find(c => c.slug === initialCohort),
+						props
+					});
+				}
+			},
+			getStudentsAndActivities: ({ cohort, props }) => {
+				const { access_token, assets_token } = getStore();
+				const cohortSlug = cohort.slug;
+				setStore({ students: null, dailyAvg: null, current: cohort });
+				let url = `${API_URL}/students/cohort/${cohortSlug}?access_token=${access_token}`;
 
 				// Fetch students from cohort
 				fetch(url, { cache: "no-cache" })
@@ -24,11 +50,20 @@ const getState = ({ getStore, setStore, getActions }) => {
 					.then(({ data: students }) => {
 						getActions("formatNames")(students);
 						// Fetch all activities from cohort
-						url = `https://assets.breatheco.de/apis/activity/cohort/${cohortSlug}?access_token=${
-							process.env.ASSETS_TOKEN
-						}`;
+						const _activities = ["classroom_attendance", "classroom_unattendance"];
+						url = `${ASSETS_URL}/activity/cohort/${cohortSlug}?activities=${_activities.join(
+							","
+						)}&access_token=${process.env.ASSETS_TOKEN}`;
 						fetch(url, { cache: "no-cache" })
-							.then(response => response.json())
+							.then(response => {
+								if (!response.ok) {
+									response.json().then(error => {
+										throw Error(error.msg || "Error fetching activities");
+									});
+								} else {
+									return response.json();
+								}
+							})
 							.then(activities => {
 								// Merge students with their activities
 								let stuAct = {}; // {student_id: {day0: unattendance, day1: attendance, ...}}
@@ -132,6 +167,14 @@ const getState = ({ getStore, setStore, getActions }) => {
 					data[i].first_name = first;
 					data[i].last_name = last;
 				}
+			},
+			getCohorts: async () => {
+				const { access_token } = getStore();
+				const url = `${process.env.API_URL}/cohorts/?access_token=${access_token}`;
+				const response = await fetch(url, { cache: "no-cache" });
+				const data = await response.json();
+				setStore({ cohorts: data.data.sort((a, b) => (a.name > b.name ? 1 : -1)) });
+				return data;
 			}
 		}
 	};

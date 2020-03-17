@@ -18,34 +18,6 @@ const injectContext = PassedComponent => {
 			});
 		}
 
-		componentDidMount() {
-			// Get all cohorts
-			const url = `https://api.breatheco.de/cohorts/?access_token=`;
-			fetch(url, { cache: "no-cache" })
-				.then(response => response.json())
-				.then(data => {
-					this.setState(({ store }) => {
-						data.data.sort((a, b) => (new Date(a.kickoff_date) < new Date(b.kickoff_date) ? 1 : -1));
-						return { store: { ...store, cohorts: data.data } };
-					});
-				});
-
-			// // A WAY OF SAVING TO STORE LEAVING THE OLD DATA, CREATES A NEW KEY DATA WITH THE VALUE OF DATA
-			// fetch(url)
-			// 	.then(response => response.json())
-			// 	.then(cohorts => {
-			// 		this.setState(state => {
-			// 			return { store: { ...state.store, cohorts } };
-			// 		});
-			// 	});
-			// // ANOTHER WAY OF SAVING TO STORE LEAVING THE OLD DATA, CREATES A NEW KEY CALLED COHORTS
-			// fetch(url)
-			// 	.then(response => response.json())
-			// 	.then(data => {
-			// 		this.setState({ store: { ...this.state.store, cohorts: data } });
-			// 	});
-		}
-
 		render() {
 			return (
 				<Context.Provider value={this.state}>

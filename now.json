@@ -1,0 +1,8 @@
+{
+    "build": {
+        "env": {
+            "API_URL": "@api_url",
+            "ASSETS_URL": "@assets_url"
+        }
+    }
+}
