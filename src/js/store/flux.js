@@ -93,7 +93,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 								setStore({ students, dailyAvg });
 							});
 
-						props.history.push(`/?cohort_slug=${cohortSlug}&access_token=${access_token}`);
+						props.history.push(`/?cohort_slug=${cohortSlug}&access_token=${access_token}&assets_token=${assets_token}`);
 					});
 			},
 			formatNames: data => {
