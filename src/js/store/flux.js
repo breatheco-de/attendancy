@@ -48,7 +48,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 						const _activities = ["classroom_attendance", "classroom_unattendance"];
 						url = `${ASSETS_URL}/activity/cohort/${cohortSlug}?activities=${_activities.join(
 							","
-						)}&assets_token=${assets_token}`;
+						)}&access_token=${assets_token}`;
 						fetch(url, { cache: "no-cache" })
 							.then(response => {
 								if (!response.ok) {
