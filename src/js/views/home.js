@@ -28,6 +28,9 @@ export const Home = props => {
 	const noData = <i className={`fas fa-exclamation-circle text-sand cursor-pointer ${zoom}`} />;
 	const thumbsUp = <i className={`fas fa-thumbs-up text-darkgreen cursor-pointer ${zoom}`} />;
 	const thumbsDown = <i className={`fas fa-thumbs-down text-darkred cursor-pointer ${zoom}`} />;
+
+	if(!params.has("access_token")) return <div className="alert alert-danger">Please provide an access_token</div>;
+	
 	return (
 		<div className="mt-2 p-3 line-height-1">
 			<select
