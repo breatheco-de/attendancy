@@ -168,14 +168,22 @@ const getState = ({ getStore, setStore, getActions }) => {
 					data[i].last_name = last;
 				}
 			},
-			getCohorts: async () => {
-				const { access_token } = getStore();
-				const url = `${process.env.API_URL}/cohorts/?access_token=${access_token}`;
-				const response = await fetch(url, { cache: "no-cache" });
-				const data = await response.json();
-				setStore({ cohorts: data.data.sort((a, b) => (a.name > b.name ? 1 : -1)) });
-				return data;
-			}
+			getCohorts: () =>
+				new Promise((resolve, reject) => {
+					const { access_token } = getStore();
+					const url = `${process.env.API_URL}/cohorts/?access_token=${access_token}`;
+					fetch(url, { cache: "no-cache" })
+						.then(response => {
+							return response.json();
+						})
+						.then(data => {
+							setStore({ cohorts: data.data.sort((a, b) => (a.name > b.name ? 1 : -1)) });
+							resolve(data);
+						})
+						.catch(error => {
+							reject(error);
+						});
+				})
 		}
 	};
 };
