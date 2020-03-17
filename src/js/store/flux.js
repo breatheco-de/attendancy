@@ -3,6 +3,11 @@ import PropTypes from "prop-types";
 const ASSETS_URL = process.env.ASSETS_URL + "/apis";
 const API_URL = process.env.API_URL;
 
+const params = new URLSearchParams(location.search);
+const assets_token = params.get("assets_token");
+const access_token = params.get("access_token");
+console.log("Some ", { assets_token, access_token });
+
 const getState = ({ getStore, setStore, getActions }) => {
 	return {
 		store: {
@@ -10,19 +15,10 @@ const getState = ({ getStore, setStore, getActions }) => {
 			current: null,
 			students: null,
 			dailyAvg: {},
-			access_token: null,
-			assets_token: null,
 			totalAvg: null
 		},
 		actions: {
 			getTokensFromURL: props => {
-				const params = new URLSearchParams(location.search);
-
-				setStore({
-					assets_token: params.get("assets_token"),
-					access_token: params.get("access_token")
-				});
-
 				const initialCohort = params.get("cohort_slug");
 				const { cohorts } = getStore();
 				if (initialCohort) {
@@ -33,7 +29,6 @@ const getState = ({ getStore, setStore, getActions }) => {
 				}
 			},
 			getStudentsAndActivities: ({ cohort, props }) => {
-				const { access_token, assets_token } = getStore();
 				const cohortSlug = cohort.slug;
 				setStore({ students: null, dailyAvg: null, current: cohort });
 				let url = `${API_URL}/students/cohort/${cohortSlug}?access_token=${access_token}`;
@@ -53,7 +48,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 						const _activities = ["classroom_attendance", "classroom_unattendance"];
 						url = `${ASSETS_URL}/activity/cohort/${cohortSlug}?activities=${_activities.join(
 							","
-						)}&access_token=${process.env.ASSETS_TOKEN}`;
+						)}&access_token=${access_token}`;
 						fetch(url, { cache: "no-cache" })
 							.then(response => {
 								if (!response.ok) {
@@ -170,7 +165,6 @@ const getState = ({ getStore, setStore, getActions }) => {
 			},
 			getCohorts: () =>
 				new Promise((resolve, reject) => {
-					const { access_token } = getStore();
 					const url = `${process.env.API_URL}/cohorts/?access_token=${access_token}`;
 					fetch(url, { cache: "no-cache" })
 						.then(response => {
