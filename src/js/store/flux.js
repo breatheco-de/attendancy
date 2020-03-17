@@ -5,7 +5,7 @@ const API_URL = process.env.API_URL;
 
 const params = new URLSearchParams(location.search);
 const assets_token = params.get("assets_token");
-const access_token = params.get("access_token");
+const access_token = params.get("bc_token");
 console.log("Some ", { assets_token, access_token });
 
 const getState = ({ getStore, setStore, getActions }) => {
@@ -93,7 +93,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 								setStore({ students, dailyAvg });
 							});
 
-						props.history.push(`/?cohort_slug=${cohortSlug}&access_token=${access_token}&assets_token=${assets_token}`);
+						props.history.push(`/?cohort_slug=${cohortSlug}&bc_token=${access_token}&assets_token=${assets_token}`);
 					});
 			},
 			formatNames: data => {
