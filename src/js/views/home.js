@@ -19,6 +19,7 @@ const months = [
 
 export const Home = props => {
 	const [zoom, setZoom] = useState("font-size-10px");
+	const [totalEveryone, setTotalEveryone] = useState(0);
 	const { store, actions } = useContext(Context);
 	const params = new URLSearchParams(location.search);
 	useEffect(() => {
@@ -81,10 +82,19 @@ export const Home = props => {
 										<b className="p-2 w-200px">Everyone</b>
 										{store.students && (
 											<b className="p-2">
-												{Math.round(
-													store.students.reduce((total, x) => total + x.attendance.avg, 0) /
-														store.students.length
-												)}
+												{store.students !== null
+													? Math.ceil(
+															store.students.reduce(
+																(total, item, index) =>
+																	store.students[index].attendance_log !== undefined
+																		? total +
+																		  store.students[index].attendance_log
+																				.dailyAttendance
+																		: 0,
+																0
+															) / store.students.length
+													  )
+													: 0}
 												%
 											</b>
 										)}
@@ -106,7 +116,12 @@ export const Home = props => {
 												<span className="p-2 w-200px">
 													{e.first_name} {e.last_name}
 												</span>
-												<span className="p-2">{Math.round(e.attendance.avg)}%</span>
+												<span className="p-2">
+													{e.attendance_log !== undefined
+														? Math.ceil(e.attendance_log.dailyAttendance)
+														: "0"}
+													%
+												</span>
 											</td>
 										</tr>
 									))
@@ -125,17 +140,12 @@ export const Home = props => {
 												<Popover
 													body={
 														<div className="pop">
-															<div>Day {i + 1}</div>
-															{store.dailyAvg[`day${i + 1}`] ? (
-																<div>{store.dailyAvg[`day${i + 1}`]}%</div>
-															) : (
-																""
-															)}
+															<div>Day {i}</div>
 														</div>
 													}>
-													{store.dailyAvg[`day${i + 1}`] === undefined
+													{store.dailyAvg[`day${i}`] === undefined
 														? noData
-														: store.dailyAvg[`day${i + 1}`] >= 85
+														: store.dailyAvg[`day${i}`] >= 85
 															? thumbsUp
 															: thumbsDown}
 												</Popover>
@@ -148,8 +158,8 @@ export const Home = props => {
 									{store.students.map((data, i) => (
 										<tr key={i} className="hover-gray">
 											{new Array(daysInCohort).fill(null).map((e, i) => {
-												let d = data.attendance[`day${i + 1}`]
-													? data.attendance[`day${i + 1}`].created_at.date
+												let d = data.attendance[`day${i}`]
+													? data.attendance[`day${i}`].created_at.date
 													: null;
 												let date = "";
 												if (d) {
@@ -163,13 +173,13 @@ export const Home = props => {
 														<Popover
 															body={
 																<div className="pop">
-																	<div>Day {i + 1}</div>
+																	<div>Day {i}</div>
 																	<div>{date}</div>
 																</div>
 															}>
-															{!data.attendance[`day${i + 1}`]
+															{!data.attendance[`day${i}`]
 																? noData
-																: data.attendance[`day${i + 1}`].slug.includes(
+																: data.attendance[`day${i}`].slug.includes(
 																		"unattendance"
 																  )
 																	? thumbsDown
