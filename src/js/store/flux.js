@@ -46,7 +46,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 						}
 						return response.json();
 					})
-					.then(({ data: students }) => {
+					.then(students => {
 						getActions("formatNames")(students);
 						// Fetch all activities from cohort
 						const _activities = ["classroom_attendance", "classroom_unattendance"];
@@ -159,12 +159,14 @@ const getState = ({ getStore, setStore, getActions }) => {
 				};
 
 				for (let i in data) {
-					let first = data[i].first_name;
-					let last = data[i].last_name;
+					let first = data[i].user.first_name;
+					let last = data[i].user.last_name;
 					if (last === null) last = "";
 					// In the fetch url, Students have email, Users have username
 					let username =
-						data[i].username === undefined ? getUserName(data[i].email) : getUserName(data[i].username);
+						data[i].user.username === undefined
+							? getUserName(data[i].user.email)
+							: getUserName(data[i].user.username);
 					// first_name: null
 					// first_name: "null null"
 					if (first === null || first.includes("null")) {
@@ -211,8 +213,8 @@ const getState = ({ getStore, setStore, getActions }) => {
 							last = arrl.join(" ");
 						}
 					}
-					data[i].first_name = first;
-					data[i].last_name = last;
+					data[i].user.first_name = first;
+					data[i].user.last_name = last;
 				}
 			},
 			getMe: async () => {
