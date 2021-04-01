@@ -5,7 +5,8 @@ const API_URL = process.env.API_URL;
 
 const params = new URLSearchParams(location.search);
 const assets_token = params.get("assets_token");
-const access_token = params.get("bc_token");
+const access_token = params.get("token");
+const academy = params.get("academy");
 console.log("Some ", { assets_token, access_token });
 
 const getState = ({ getStore, setStore, getActions }) => {
@@ -22,19 +23,22 @@ const getState = ({ getStore, setStore, getActions }) => {
 				const initialCohort = params.get("cohort_slug");
 				const { cohorts } = getStore();
 				if (initialCohort) {
+					console.log("cohorts", cohorts);
+
 					getActions("getStudentsAndActivities")({
 						cohort: cohorts.find(c => c.slug === initialCohort),
 						props
 					});
 				}
 			},
-			getStudentsAndActivities: ({ cohort, props }) => {
+			getStudentsAndActivities: async ({ cohort, props }) => {
 				const cohortSlug = cohort.slug;
-				setStore({ students: null, dailyAvg: null, current: cohort });
-				let url = `${API_URL}/students/cohort/${cohortSlug}?access_token=${access_token}`;
+				const c = await getActions("getSingleCohort")({ cohort_id: cohort.id });
+				setStore({ students: null, dailyAvg: null, current: c });
+				let url = `${API_URL}/v1/admissions/cohort/user?cohorts=${cohortSlug}`;
 
 				// Fetch students from cohort
-				fetch(url, { cache: "no-cache" })
+				fetch(url, { cache: "no-cache", headers: { Authorization: `Token ${access_token}` } })
 					.then(response => {
 						if (!response.ok) {
 							props.history.push("/?error=renew_access_token");
@@ -140,7 +144,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 							});
 
 						props.history.push(
-							`/?cohort_slug=${cohortSlug}&bc_token=${access_token}&assets_token=${assets_token}`
+							`/?cohort_slug=${cohortSlug}&token=${access_token}&assets_token=${assets_token}`
 						);
 					});
 			},
@@ -211,15 +215,38 @@ const getState = ({ getStore, setStore, getActions }) => {
 					data[i].last_name = last;
 				}
 			},
+			getMe: async () => {
+				const url = `${process.env.API_URL}/v1/auth/user/me`;
+				const resp = await fetch(url, {
+					cache: "no-cache",
+					headers: { Authorization: `Token ${access_token}` }
+				});
+				const data = resp.json();
+				console.log("Me", data);
+				return data;
+			},
+			getSingleCohort: async ({ cohort_id }) => {
+				const url = `${process.env.API_URL}/v1/admissions/academy/cohort/${cohort_id}`;
+				const resp = await fetch(url, {
+					cache: "no-cache",
+					headers: { Authorization: `Token ${access_token}`, Academy: academy }
+				});
+				const data = resp.json();
+				console.log("Cohort", data);
+				return data;
+			},
 			getCohorts: () =>
 				new Promise((resolve, reject) => {
-					const url = `${process.env.API_URL}/cohorts/?access_token=${access_token}`;
-					fetch(url, { cache: "no-cache" })
+					const url = `${process.env.API_URL}/v1/admissions/academy/cohort`;
+					fetch(url, {
+						cache: "no-cache",
+						headers: { Authorization: `Token ${access_token}`, Academy: academy }
+					})
 						.then(response => {
 							return response.json();
 						})
 						.then(data => {
-							setStore({ cohorts: data.data.sort((a, b) => (a.name > b.name ? 1 : -1)) });
+							setStore({ cohorts: data.sort((a, b) => (a.name > b.name ? 1 : -1)) });
 							resolve(data);
 						})
 						.catch(error => {

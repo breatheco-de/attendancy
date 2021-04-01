@@ -20,17 +20,47 @@ const months = [
 export const Home = props => {
 	const [zoom, setZoom] = useState("font-size-10px");
 	const [totalEveryone, setTotalEveryone] = useState(0);
+	const [academies, setAcademies] = useState([]);
 	const { store, actions } = useContext(Context);
 	const params = new URLSearchParams(location.search);
 	useEffect(() => {
-		actions.getCohorts().then(data => actions.getTokensFromURL(props));
+		if (params.has("token"))
+			actions.getMe().then(me => {
+				let aca = me.roles.map(r => r.academy);
+				setAcademies(aca);
+				if (aca.length == 1 && !params.has("academy"))
+					window.location.href = window.location.href + "&academy=" + aca[0].id;
+			});
+		if (params.has("token") && params.has("academy")) {
+			actions.getCohorts().then(data => actions.getTokensFromURL(props));
+		}
 	}, []);
-	const daysInCohort = store.current ? store.current.profile.duration_in_days : 0;
+	const daysInCohort = store.current ? store.current.syllabus.certificate.duration_in_days : 0;
 	const noData = <i className={`fas fa-exclamation-circle text-sand cursor-pointer ${zoom}`} />;
 	const thumbsUp = <i className={`fas fa-thumbs-up text-darkgreen cursor-pointer ${zoom}`} />;
 	const thumbsDown = <i className={`fas fa-thumbs-down text-darkred cursor-pointer ${zoom}`} />;
 
-	if (!params.has("bc_token")) return <div className="alert alert-danger">Please provide a bc_token</div>;
+	if (!params.has("token"))
+		return (
+			<div className="alert alert-danger">
+				Please{" "}
+				<a href={`${process.env.API_URL}/v1/auth/view/login?url=${window.location.href}`}>log in first</a>
+			</div>
+		);
+
+	if (!params.has("academy") && academies.length > 1)
+		return (
+			<div className="alert alert-danger">
+				Please choose an academy :
+				<ul>
+					{academies.map(a => (
+						<li key={a.id}>
+							<a href={`${window.location.href}&academy=${a.id}`}>{a.name}</a>
+						</li>
+					))}
+				</ul>
+			</div>
+		);
 
 	return (
 		<div className="mt-2 p-3 line-height-1">
@@ -56,7 +86,7 @@ export const Home = props => {
 			{params.has("error") ? (
 				<div className="text-center my-5">
 					<h2 className="mb-5">Try renewing the access token in the url</h2>
-					<h4>?access_token=d08334cd029fc1fdeff7cff7b263bdefc3819661</h4>
+					<h4>?token=d08334cd029fc1fdeff7cff7b263bdefc3819661</h4>
 				</div>
 			) : params.has("cohort_slug") && !store.students ? (
 				<h2 className="text-center my-5">Loading students...</h2>
