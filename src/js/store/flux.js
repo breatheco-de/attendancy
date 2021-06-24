@@ -33,7 +33,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 			},
 			getStudentsAndActivities: async ({ cohort, props }) => {
 				const cohortSlug = cohort.slug;
-				const c = await getActions("getSingleCohort")({ cohort_id: cohort.id });
+				const c = await getActions("getSingleCohort")(cohort.id);
 				setStore({ students: null, dailyAvg: null, current: c });
 				let url = `${API_URL}/v1/admissions/cohort/user?cohorts=${cohortSlug}`;
 
@@ -227,7 +227,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 				console.log("Me", data);
 				return data;
 			},
-			getSingleCohort: async ({ cohort_id }) => {
+			getSingleCohort: async cohort_id => {
 				const url = `${process.env.API_URL}/v1/admissions/academy/cohort/${cohort_id}`;
 				const resp = await fetch(url, {
 					cache: "no-cache",

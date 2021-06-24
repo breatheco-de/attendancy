@@ -24,15 +24,22 @@ export const Home = props => {
 	const { store, actions } = useContext(Context);
 	const params = new URLSearchParams(location.search);
 	useEffect(() => {
-		if (params.has("token"))
+		if (params.has("token")) {
 			actions.getMe().then(me => {
 				let aca = me.roles.map(r => r.academy);
 				setAcademies(aca);
 				if (aca.length == 1 && !params.has("academy"))
 					window.location.href = window.location.href + "&academy=" + aca[0].id;
 			});
-		if (params.has("token") && params.has("academy")) {
-			actions.getCohorts().then(data => actions.getTokensFromURL(props));
+			if (params.has("academy")) {
+				actions.getCohorts().then(data => actions.getTokensFromURL(props));
+			}
+			if (params.has("cohort_slug")) {
+				const cohort_slug = params.get("cohort_slug");
+				actions.getSingleCohort(cohort_slug).then(cohort => {
+					actions.getStudentsAndActivities({ cohort, props });
+				});
+			}
 		}
 	}, []);
 	const daysInCohort = store.current ? store.current.syllabus.certificate.duration_in_days : 0;
@@ -48,7 +55,7 @@ export const Home = props => {
 			</div>
 		);
 
-	if (!params.has("academy") && academies.length > 1)
+	if (!params.has("academy") && !params.has("cohort_slug") && academies.length > 1)
 		return (
 			<div className="alert alert-danger">
 				Please choose an academy :
