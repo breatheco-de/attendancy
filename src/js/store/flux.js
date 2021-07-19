@@ -36,9 +36,12 @@ const getState = ({ getStore, setStore, getActions }) => {
 				const c = await getActions("getSingleCohort")(cohort.id);
 				setStore({ students: null, dailyAvg: null, current: c });
 				let url = `${API_URL}/v1/admissions/cohort/user?cohorts=${cohortSlug}`;
-
+				let headers = { Authorization: `Token ${access_token}`, Academy: cohort.academy.id };
 				// Fetch students from cohort
-				fetch(url, { cache: "no-cache", headers: { Authorization: `Token ${access_token}` } })
+				fetch(url, {
+					cache: "no-cache",
+					headers
+				})
 					.then(response => {
 						if (!response.ok) {
 							props.history.push("/?error=renew_access_token");
@@ -50,10 +53,8 @@ const getState = ({ getStore, setStore, getActions }) => {
 						getActions("formatNames")(students);
 						// Fetch all activities from cohort
 						const _activities = ["classroom_attendance", "classroom_unattendance"];
-						url = `${ASSETS_URL}/activity/cohort/${cohortSlug}?activities=${_activities.join(
-							","
-						)}&access_token=${assets_token}`;
-						fetch(url, { cache: "no-cache" })
+						url = `${API_URL}/v1/activity/academy/cohort/${cohortSlug}?activities=${_activities.join(",")}`;
+						fetch(url, { cache: "no-cache", headers })
 							.then(response => {
 								if (!response.ok) {
 									response.json().then(error => {
@@ -64,12 +65,13 @@ const getState = ({ getStore, setStore, getActions }) => {
 								}
 							})
 							.then(activities => {
+								if (!Array.isArray(activities)) activities = [];
 								// Merge students with their activities
 								let student = {};
 								let stuAct = {}; // {student_id: {day0: unattendance, day1: attendance, ...}}
 								let dailyAvg = {}; // {day0: 89%, day1: 61%, ...}
 								//
-								activities.log.filter(item => item.slug.includes("attendance")).forEach(element => {
+								activities.filter(item => item.slug.includes("attendance")).forEach(element => {
 									let days = JSON.parse(element.data).day;
 									if (student[element.user_id] === undefined) {
 										student[element.user_id] = {};
@@ -144,7 +146,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 							});
 
 						props.history.push(
-							`/?cohort_slug=${cohortSlug}&token=${access_token}&assets_token=${assets_token}`
+							`/?cohort_slug=${cohortSlug}&academy=${cohort.academy.id}&token=${access_token}`
 						);
 					});
 			},
@@ -223,8 +225,13 @@ const getState = ({ getStore, setStore, getActions }) => {
 					cache: "no-cache",
 					headers: { Authorization: `Token ${access_token}` }
 				});
+				console.log("resp", resp);
+				if (resp.status === 401 || resp.status === 403) {
+					window.location.href = "/";
+					return false;
+				}
+
 				const data = resp.json();
-				console.log("Me", data);
 				return data;
 			},
 			getSingleCohort: async cohort_id => {

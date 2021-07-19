@@ -26,6 +26,7 @@ export const Home = props => {
 	useEffect(() => {
 		if (params.has("token")) {
 			actions.getMe().then(me => {
+				if (!me) return;
 				let aca = me.roles.map(r => r.academy);
 				setAcademies(aca);
 				if (aca.length == 1 && !params.has("academy"))
@@ -151,7 +152,7 @@ export const Home = props => {
 												className="border rounded d-flex justify-content-between mr-4 h-50px
 													align-items-center">
 												<span className="p-2 w-200px">
-													{e.first_name} {e.last_name}
+													{e.user.first_name} {e.user.last_name}
 												</span>
 												<span className="p-2">
 													{e.attendance_log !== undefined
