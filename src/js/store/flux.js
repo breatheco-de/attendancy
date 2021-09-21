@@ -53,7 +53,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 						getActions("formatNames")(students);
 						// Fetch all activities from cohort
 						const _activities = ["classroom_attendance", "classroom_unattendance"];
-						url = `${API_URL}/v1/activity/academy/cohort/${cohortSlug}?activities=${_activities.join(",")}`;
+						url = `${API_URL}/v1/activity/cohort/${cohortSlug}?slug=${_activities.join(",")}`;
 						fetch(url, { cache: "no-cache", headers })
 							.then(response => {
 								if (!response.ok) {
@@ -72,7 +72,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 								let dailyAvg = {}; // {day0: 89%, day1: 61%, ...}
 								//
 								activities.filter(item => item.slug.includes("attendance")).forEach(element => {
-									let days = JSON.parse(element.data).day;
+									let days = element.data.day;
 									if (student[element.user_id] === undefined) {
 										student[element.user_id] = {};
 										student[element.user_id].student_id = element.user_id;
@@ -100,7 +100,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 										dailyAvg[day] += element.slug.includes("unattendance") ? 0 : 1;
 									}
 
-									let day = `day${JSON.parse(element.data).day}`;
+									let day = `day${element.data.day}`;
 									// Create temp obj to store all activities by student id
 									if (stuAct[element.user_id] === undefined) {
 										stuAct[element.user_id] = {};

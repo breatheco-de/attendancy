@@ -43,7 +43,7 @@ export const Home = props => {
 			}
 		}
 	}, []);
-	const daysInCohort = store.current ? store.current.syllabus.certificate.duration_in_days : 0;
+	const daysInCohort = store.current ? store.current.syllabus_version.duration_in_days : 0;
 	const noData = <i className={`fas fa-exclamation-circle text-sand cursor-pointer ${zoom}`} />;
 	const thumbsUp = <i className={`fas fa-thumbs-up text-darkgreen cursor-pointer ${zoom}`} />;
 	const thumbsDown = <i className={`fas fa-thumbs-down text-darkred cursor-pointer ${zoom}`} />;
