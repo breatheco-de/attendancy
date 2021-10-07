@@ -35,7 +35,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 				const cohortSlug = cohort.slug;
 				const c = await getActions("getSingleCohort")(cohort.id);
 				setStore({ students: null, dailyAvg: null, current: c });
-				let url = `${API_URL}/v1/admissions/cohort/user?cohorts=${cohortSlug}`;
+				let url = `${API_URL}/v1/admissions/cohort/user?cohorts=${cohortSlug}&roles=STUDENT`;
 				let headers = { Authorization: `Token ${access_token}`, Academy: cohort.academy.id };
 				// Fetch students from cohort
 				fetch(url, {
@@ -51,6 +51,8 @@ const getState = ({ getStore, setStore, getActions }) => {
 					})
 					.then(students => {
 						getActions("formatNames")(students);
+						let id_map = {};
+						students.forEach(s => (id_map[s.user.email] = s.user.id));
 						// Fetch all activities from cohort
 						const _activities = ["classroom_attendance", "classroom_unattendance"];
 						url = `${API_URL}/v1/activity/cohort/${cohortSlug}?slug=${_activities.join(",")}`;
@@ -69,11 +71,16 @@ const getState = ({ getStore, setStore, getActions }) => {
 								// Merge students with their activities
 								let student = {};
 								let stuAct = {}; // {student_id: {day0: unattendance, day1: attendance, ...}}
+								let stuActEmail = {}; // legacy
 								let dailyAvg = {}; // {day0: 89%, day1: 61%, ...}
 								//
 
 								activities.filter(item => item.slug.includes("attendance")).forEach(element => {
 									let days = element.data.day;
+
+									// map ideas with old breathecode from new breathecode
+									if (!element.academy_id) element.user_id = id_map[element.email];
+
 									if (student[element.user_id] === undefined) {
 										student[element.user_id] = {};
 										student[element.user_id].student_id = element.user_id;
@@ -110,6 +117,9 @@ const getState = ({ getStore, setStore, getActions }) => {
 									if (stuAct[element.user_id] === undefined) {
 										stuAct[element.user_id] = {};
 										stuAct[element.user_id].avg = 0;
+
+										// duplicate element but index be email, because legacy can only use emails
+										stuActEmail[element.email] = stuAct[element.user_id];
 									}
 									if (dailyAvg[day] === undefined) {
 										dailyAvg[day] = 0;
@@ -120,6 +130,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 									// }
 									stuAct[element.user_id][day] = element;
 									stuAct[element.user_id].avg += element.slug.includes("unattendance") ? 0 : 1;
+
 									dailyAvg[day] += element.slug.includes("unattendance") ? 0 : 1;
 								});
 								// Add cohort assistance into students array
@@ -134,7 +145,9 @@ const getState = ({ getStore, setStore, getActions }) => {
 											item.attendance_log.unattendance = 0;
 											item.attendance_log.days = [];
 										}
-										if (item.user.id == studentProp) {
+
+										//                                  ⬇ just for legacy, previous breathecode api was just id instead of user.id
+										if (item.user.id == studentProp || item.id == studentProp) {
 											item.attendance_log = student[item.user.id];
 										}
 									});
@@ -149,9 +162,16 @@ const getState = ({ getStore, setStore, getActions }) => {
 										(stuAct[key].avg =
 											(stuAct[key].avg / (Object.keys(stuAct[key]).length - 1)) * 100) // Minus the avg key
 								);
+
 								students.forEach(e => {
 									// console.log(`Student ${e.user.id}`, stuAct[e.user.id]);
-									e.attendance = stuAct[e.user.id] ? stuAct[e.user.id] : [];
+									let _id = e.user != undefined ? e.user.id : e.id;
+									// console.log("stuAct[_id]", _id, stuAct[_id], e);
+									e.attendance = stuAct[_id]
+										? stuAct[_id]
+										: stuActEmail[e.user.email]
+											? stuActEmail[e.user.email]
+											: [];
 								});
 								setStore({ students, dailyAvg });
 							});
