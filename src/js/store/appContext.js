@@ -16,6 +16,8 @@ const injectContext = PassedComponent => {
 						store: Object.assign(this.state.store, updatedStore)
 					})
 			});
+
+			window.store = this.state.store;
 		}
 
 		render() {

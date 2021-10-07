@@ -71,6 +71,7 @@ const getState = ({ getStore, setStore, getActions }) => {
 								let stuAct = {}; // {student_id: {day0: unattendance, day1: attendance, ...}}
 								let dailyAvg = {}; // {day0: 89%, day1: 61%, ...}
 								//
+
 								activities.filter(item => item.slug.includes("attendance")).forEach(element => {
 									let days = element.data.day;
 									if (student[element.user_id] === undefined) {
@@ -90,6 +91,10 @@ const getState = ({ getStore, setStore, getActions }) => {
 										student[element.user_id].unattendance += element.slug.includes("unattendance")
 											? 1
 											: 0;
+
+										if (element.user_id == 3777 && element.day == 1) {
+											console.log(`${element.user_id} ${element.slug} on day ${element.day}`);
+										}
 										student[element.user_id].days.push(days);
 										student[element.user_id].totalAttendance =
 											(student[element.user_id].days.length * 100) / 45;
@@ -110,13 +115,16 @@ const getState = ({ getStore, setStore, getActions }) => {
 										dailyAvg[day] = 0;
 									}
 									// Inside also store all the activities by creating a day property
+									// if (element.user_id == 3777 && element.day == 1) {
+									// 	console.log(`${element.user_id} ${element.slug} on day ${element.day}`);
+									// }
 									stuAct[element.user_id][day] = element;
 									stuAct[element.user_id].avg += element.slug.includes("unattendance") ? 0 : 1;
 									dailyAvg[day] += element.slug.includes("unattendance") ? 0 : 1;
 								});
 								// Add cohort assistance into students array
 
-								for (let singleStudent in student) {
+								for (let studentProp in student) {
 									students.forEach(item => {
 										if (item.attendance_log === undefined) {
 											item.attendance_log = {};
@@ -126,8 +134,8 @@ const getState = ({ getStore, setStore, getActions }) => {
 											item.attendance_log.unattendance = 0;
 											item.attendance_log.days = [];
 										}
-										if (item.id == singleStudent) {
-											item.attendance_log = student[singleStudent];
+										if (item.user.id == studentProp) {
+											item.attendance_log = student[item.user.id];
 										}
 									});
 								}
@@ -141,7 +149,10 @@ const getState = ({ getStore, setStore, getActions }) => {
 										(stuAct[key].avg =
 											(stuAct[key].avg / (Object.keys(stuAct[key]).length - 1)) * 100) // Minus the avg key
 								);
-								students.forEach(e => (e.attendance = stuAct[e.id] ? stuAct[e.id] : []));
+								students.forEach(e => {
+									// console.log(`Student ${e.user.id}`, stuAct[e.user.id]);
+									e.attendance = stuAct[e.user.id] ? stuAct[e.user.id] : [];
+								});
 								setStore({ students, dailyAvg });
 							});
 
