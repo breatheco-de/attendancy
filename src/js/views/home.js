@@ -197,7 +197,8 @@ export const Home = props => {
 										<tr key={i} className="hover-gray">
 											{new Array(daysInCohort).fill(null).map((e, i) => {
 												let d = data.attendance[`day${i}`]
-													? data.attendance[`day${i}`].created_at.date
+													? data.attendance[`day${i}`].created_at ||
+													  data.attendance[`day${i}`].created_at.date
 													: null;
 												let date = "";
 												if (d) {
